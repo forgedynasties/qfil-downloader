@@ -121,9 +121,9 @@
                     <div class="mb-3">
                         <label for="projectName" class="form-label">Project Name *</label>
                         <input type="text" class="form-control" id="projectName" required
-                               placeholder="e.g., my_android_project">
+                               placeholder="e.g., QCM6125 Android 13 Test">
                         <small class="form-text text-muted">
-                            Use alphanumeric characters, underscores, hyphens, and dots only
+                            Display name for the project (spaces allowed)
                         </small>
                     </div>
                     <div class="mb-3">
@@ -165,9 +165,9 @@ async function addProject() {
         return;
     }
     
-    // Validate project name
-    if (!/^[a-zA-Z0-9_.-]+$/.test(name)) {
-        alert('Project name can only contain alphanumeric characters, underscores, hyphens, and dots');
+    // Validate project name (allow most characters except dangerous ones)
+    if (!/^[^<>:"/\\|?*\x00-\x1f]+$/.test(name) || name.length > 100) {
+        alert('Project name cannot contain special characters like < > : " / \\ | ? * and must be under 100 characters');
         return;
     }
     

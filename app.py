@@ -121,6 +121,16 @@ def add_project():
     if not data or 'name' not in data or 'path' not in data:
         return jsonify({'error': 'Name and path are required'}), 400
     
+    # Validate project name (more lenient, but secure)
+    name = data['name'].strip()
+    if not name or len(name) > 100:
+        return jsonify({'error': 'Project name must be between 1-100 characters'}), 400
+    
+    # Check for dangerous characters that could cause issues
+    dangerous_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+    if any(char in name for char in dangerous_chars):
+        return jsonify({'error': 'Project name contains invalid characters'}), 400
+    
     # Validate project path
     project_path = Path(data['path'])
     qfil_path = project_path / QFIL_SUBDIR
@@ -131,13 +141,13 @@ def add_project():
     projects = load_projects()
     
     # Check if project name already exists
-    if any(p['name'] == data['name'] for p in projects):
+    if any(p['name'] == name for p in projects):
         return jsonify({'error': 'Project name already exists'}), 400
     
     new_project = {
-        'name': data['name'],
+        'name': name,
         'path': str(project_path),
-        'description': data.get('description', ''),
+        'description': data.get('description', '').strip(),
         'added_date': datetime.now().isoformat()
     }
     
@@ -220,13 +230,17 @@ def create_zip_with_progress(qfil_path, zip_path, download_id):
             }
         return False
 
-@app.route('/download/<project_name>')
+@app.route('/download/<path:project_name>')
 def download_qfil(project_name):
     """Download QFIL package for specified project"""
     
-    # Validate project name (security check)
-    if not project_name.replace('_', '').replace('-', '').replace('.', '').isalnum():
-        abort(400, 'Invalid project name')
+    # Validate project name (security check) - allow URL-safe characters
+    if not project_name or len(project_name) > 100:
+        abort(400, 'Invalid project name length')
+    
+    # Check for path traversal and other dangerous patterns
+    if '..' in project_name or '/' in project_name or '\\' in project_name:
+        abort(400, 'Invalid project name format')
     
     # Find project in manual list
     projects = load_projects()
@@ -295,12 +309,17 @@ def download_qfil(project_name):
             download_progress.pop(download_id, None)
         abort(500, f'Error creating download package: {str(e)}')
 
-@app.route('/project/<project_name>')
+@app.route('/project/<path:project_name>')
 def project_details(project_name):
     """Show details for a specific project"""
     
-    if not project_name.replace('_', '').replace('-', '').replace('.', '').isalnum():
-        abort(400, 'Invalid project name')
+    # Validate project name (security check)
+    if not project_name or len(project_name) > 100:
+        abort(400, 'Invalid project name length')
+    
+    # Check for dangerous patterns
+    if '..' in project_name or '/' in project_name or '\\' in project_name:
+        abort(400, 'Invalid project name format')
     
     # Find project in manual list
     projects = load_projects()
