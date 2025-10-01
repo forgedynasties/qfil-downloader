@@ -176,6 +176,53 @@ def get_progress(download_id):
         progress = download_progress.get(download_id, {'progress': 0, 'status': 'not_found'})
     return jsonify(progress)
 
+@app.route('/browse_folders')
+def browse_folders():
+    """Browse folders for project selection"""
+    path = request.args.get('path', '/')
+    
+    try:
+        # Security check - prevent path traversal
+        if '..' in path or not os.path.isabs(path):
+            return jsonify({'error': 'Invalid path'}), 400
+        
+        # Normalize the path
+        path = os.path.normpath(path)
+        if not os.path.exists(path):
+            return jsonify({'error': 'Path does not exist'}), 404
+        
+        if not os.path.isdir(path):
+            return jsonify({'error': 'Path is not a directory'}), 400
+        
+        folders = []
+        try:
+            for item in os.listdir(path):
+                item_path = os.path.join(path, item)
+                if os.path.isdir(item_path):
+                    # Check if this directory has QFIL structure
+                    qfil_path = os.path.join(item_path, QFIL_SUBDIR)
+                    has_qfil_structure = os.path.exists(qfil_path) and os.path.isdir(qfil_path)
+                    
+                    folders.append({
+                        'name': item,
+                        'path': item_path,
+                        'has_qfil_structure': has_qfil_structure
+                    })
+        except PermissionError:
+            return jsonify({'error': 'Permission denied'}), 403
+        
+        # Sort folders - QFIL folders first, then alphabetically
+        folders.sort(key=lambda x: (not x['has_qfil_structure'], x['name'].lower()))
+        
+        return jsonify({
+            'success': True,
+            'current_path': path,
+            'folders': folders
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 def create_zip_with_progress(qfil_path, zip_path, download_id):
     """Create ZIP file with progress tracking"""
     try:
