@@ -25,7 +25,7 @@ This Flask application can be easily deployed using Docker and Docker Compose.
 
 3. **Build and run:**
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 4. **Access the application:**
@@ -37,16 +37,16 @@ This Flask application can be easily deployed using Docker and Docker Compose.
 
 ```bash
 # Build and start in background
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Stop the application
-docker-compose down
+docker compose down
 
 # Rebuild after code changes
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 #### Using Docker directly
@@ -126,10 +126,10 @@ curl -f http://localhost:5000/
 
 ```bash
 # View application logs
-docker-compose logs qfil-downloader
+docker compose logs qfil-downloader
 
 # Follow logs in real-time
-docker-compose logs -f qfil-downloader
+docker compose logs -f qfil-downloader
 ```
 
 ### Troubleshooting
@@ -158,7 +158,7 @@ docker-compose logs -f qfil-downloader
 
 ```bash
 # Access container shell for debugging
-docker-compose exec qfil-downloader /bin/bash
+docker compose exec qfil-downloader /bin/bash
 ```
 
 ### Scaling
@@ -172,7 +172,7 @@ command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "
 
 Or deploy multiple instances:
 ```bash
-docker-compose up --scale qfil-downloader=3
+docker compose up --scale qfil-downloader=3
 ```
 
 ### Updates
@@ -209,23 +209,23 @@ update.bat rolling
 
 **Quick Update (Code Changes):**
 ```bash
-docker-compose down
-docker-compose up --build -d
+docker compose down
+docker compose up --build -d
 ```
 
 **Clean Update (Fresh Start):**
 ```bash
-docker-compose down --volumes --remove-orphans
+docker compose down --volumes --remove-orphans
 docker image prune -f
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 **Rolling Update (Zero Downtime):**
 ```bash
-docker-compose build
-docker-compose up -d --scale qfil-downloader=2 --no-recreate
+docker compose build
+docker compose up -d --scale qfil-downloader=2 --no-recreate
 sleep 30
-docker-compose up -d --scale qfil-downloader=1
+docker compose up -d --scale qfil-downloader=1
 ```
 
 #### Update Best Practices
@@ -255,7 +255,7 @@ Important files to backup:
 
 ```bash
 # Backup project configurations
-docker-compose exec qfil-downloader cat /app/projects.json > backup-projects.json
+docker compose exec qfil-downloader cat /app/projects.json > backup-projects.json
 
 # Automated backup (included in update scripts)
 cp projects.json projects.json.backup.$(date +%Y%m%d_%H%M%S)

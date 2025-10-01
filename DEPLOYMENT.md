@@ -24,7 +24,7 @@ cp docker-compose.yml docker-compose.prod.yml
 # Edit docker-compose.prod.yml with your settings
 
 # 3. Deploy
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 #### Option 2: Systemd Service
@@ -113,7 +113,7 @@ git pull origin main
 ### Logs
 ```bash
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # System logs
 journalctl -u qfil-downloader -f

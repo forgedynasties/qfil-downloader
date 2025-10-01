@@ -9,6 +9,7 @@ if "%UPDATE_TYPE%"=="" set "UPDATE_TYPE=quick"
 
 echo 🔄 QFIL Downloader Container Update
 echo Update type: %UPDATE_TYPE%
+echo Using Docker Compose V2
 echo ==================================
 
 if "%UPDATE_TYPE%"=="quick" goto quick
@@ -31,13 +32,13 @@ if exist "projects.json" (
 )
 
 echo 🛑 Stopping containers...
-docker-compose down
+docker compose down
 
 echo 🔨 Building new image...
-docker-compose build --no-cache
+docker compose build --no-cache
 
 echo 🚀 Starting updated containers...
-docker-compose up -d
+docker compose up -d
 
 echo ⏳ Waiting for health check...
 timeout /t 15 /nobreak > nul
@@ -58,17 +59,17 @@ if exist "projects.json" (
 )
 
 echo 🛑 Stopping and removing containers...
-docker-compose down --volumes --remove-orphans
+docker compose down --volumes --remove-orphans
 
 echo 🗑️ Removing old images...
 docker image prune -f
 docker volume prune -f
 
 echo 🔨 Building fresh image...
-docker-compose build --no-cache --pull
+docker compose build --no-cache --pull
 
 echo 🚀 Starting fresh containers...
-docker-compose up -d
+docker compose up -d
 
 echo ⏳ Waiting for health check...
 timeout /t 20 /nobreak > nul
@@ -81,26 +82,26 @@ goto end
 echo 🔄 Performing rolling update (zero downtime)...
 
 echo 🔨 Building new image...
-docker-compose build --no-cache
+docker compose build --no-cache
 
 echo 📈 Scaling up with new version...
-docker-compose up -d --scale qfil-downloader=2 --no-recreate
+docker compose up -d --scale qfil-downloader=2 --no-recreate
 
 echo ⏳ Waiting for new container to be healthy...
 timeout /t 30 /nobreak > nul
 
 echo 📉 Scaling down to single instance...
-docker-compose up -d --scale qfil-downloader=1
+docker compose up -d --scale qfil-downloader=1
 
 echo 🔍 Final status check...
-docker-compose ps
+docker compose ps
 goto end
 
 :end
 echo.
 echo ✅ Update completed successfully!
 echo 🌐 Application available at: http://localhost:5000
-echo 📊 View logs with: docker-compose logs -f
+echo 📊 View logs with: docker compose logs -f
 echo 🔧 Manage projects at: http://localhost:5000/manage
 
 REM Health check
@@ -110,7 +111,7 @@ curl -f -s http://localhost:5000/ > nul 2>&1
 if %errorlevel%==0 (
     echo ✅ Health check passed - Application is running correctly
 ) else (
-    echo ❌ Health check failed - Please check logs with: docker-compose logs
+    echo ❌ Health check failed - Please check logs with: docker compose logs
     exit /b 1
 )
 
