@@ -9,8 +9,10 @@ services:
     volumes:
       # Mount projects.json to persist project configurations
       - ./projects.json:/app/projects.json
-      # Mount a directory for AOSP projects (adjust path as needed)
-      - /path/to/your/aosp/projects:/projects:ro
+      # Mount your specific AOSP project directory
+      - /home/hwpc:/home/hwpc:ro
+      # Alternative: Mount just the qcm_test directory
+      # - /home/hwpc/qcm_test:/home/hwpc/qcm_test:ro
       # Mount temp directory for downloads
       - qfil_temp:/app/temp
     environment:
