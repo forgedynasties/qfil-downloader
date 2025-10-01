@@ -45,6 +45,29 @@ def save_projects(projects):
     except IOError:
         return False
 
+def get_latest_modification_time(qfil_path):
+    """Get the latest modification time from all files in the QFIL directory"""
+    latest_mtime = 0
+    try:
+        for file_path in qfil_path.rglob('*'):
+            if file_path.is_file():
+                mtime = file_path.stat().st_mtime
+                if mtime > latest_mtime:
+                    latest_mtime = mtime
+    except (OSError, IOError):
+        pass
+    return latest_mtime if latest_mtime > 0 else None
+
+def format_timestamp(timestamp):
+    """Format timestamp in human readable format"""
+    if timestamp is None:
+        return "Unknown"
+    try:
+        dt = datetime.fromtimestamp(timestamp)
+        return dt.strftime("%Y-%m-%d %H:%M")
+    except (ValueError, OSError):
+        return "Unknown"
+
 def get_available_projects():
     """Get list of available AOSP projects with QFIL packages"""
     projects = []
@@ -58,13 +81,18 @@ def get_available_projects():
             # Check if directory has files
             files = list(qfil_path.glob('*'))
             if files:
+                # Get the latest modification time from all files in the QFIL directory
+                latest_mtime = get_latest_modification_time(qfil_path)
+                
                 projects.append({
                     'name': project_config['name'],
                     'path': str(project_path),
                     'qfil_path': str(qfil_path),
                     'file_count': len(files),
                     'size': get_directory_size(qfil_path),
-                    'description': project_config.get('description', '')
+                    'description': project_config.get('description', ''),
+                    'last_modified': latest_mtime,
+                    'last_modified_formatted': format_timestamp(latest_mtime)
                 })
     
     return sorted(projects, key=lambda x: x['name'])

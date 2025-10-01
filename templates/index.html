@@ -45,6 +45,12 @@
                                         {{ format_size(project.size) }}
                                     </span>
                                 </div>
+                                <div class="mb-2">
+                                    <span class="badge bg-success stats-badge">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ project.last_modified_formatted }}
+                                    </span>
+                                </div>
                                 <small class="text-muted">
                                     <i class="fas fa-folder-open me-1"></i>
                                     {{ project.path }}
