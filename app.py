@@ -20,7 +20,7 @@ app.config['SECRET_KEY'] = 'your-secret-key-change-this'
 
 # Configuration
 PROJECTS_FILE = 'projects.json'  # File to store manual project paths
-QFIL_SUBDIR = 'Unpacking_Tool/qfil_dowload_emmc'
+QFIL_SUBDIR = 'Unpacking_Tool/qfil_download_emmc'
 
 # Progress tracking for downloads
 download_progress = {}
