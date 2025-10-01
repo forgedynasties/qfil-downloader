@@ -237,4 +237,9 @@ config_local.py
 *.crt
 *.cert
 
+# Docker
+.docker/
+docker-compose.override.yml
+.env.docker
+
 .github/

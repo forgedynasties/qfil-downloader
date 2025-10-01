@@ -16,6 +16,21 @@ A Flask-based web application for managing and downloading QFIL packages from AO
 
 ## Installation
 
+### Option 1: Docker (Recommended)
+
+1. **Using Docker Compose:**
+   ```bash
+   # Update docker-compose.yml with your AOSP project paths
+   docker-compose up -d
+   ```
+   
+2. **Access the application:**
+   Open http://localhost:5000
+
+See [DOCKER.md](DOCKER.md) for detailed Docker deployment instructions.
+
+### Option 2: Local Python Installation
+
 1. **Clone or download this project**
 2. **Install Python dependencies**:
    ```bash

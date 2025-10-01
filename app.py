@@ -357,5 +357,10 @@ if __name__ == '__main__':
     print(f"Projects are managed manually via the web interface")
     print(f"Looking for QFIL structure: <project_path>/{QFIL_SUBDIR}/")
     
+    # Get configuration from environment variables
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('FLASK_ENV', 'development') == 'development'
+    
     # Run the application
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host=host, port=port, debug=debug)

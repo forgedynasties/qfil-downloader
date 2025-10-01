@@ -1,0 +1,7 @@
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Docker volumes and containers
+qfil_temp/

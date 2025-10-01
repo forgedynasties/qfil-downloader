@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  qfil-downloader:
+    build: .
+    container_name: qfil-downloader
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount projects.json to persist project configurations
+      - ./projects.json:/app/projects.json
+      # Mount a directory for AOSP projects (adjust path as needed)
+      - /path/to/your/aosp/projects:/projects:ro
+      # Mount temp directory for downloads
+      - qfil_temp:/app/temp
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=your-production-secret-key-change-this
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  qfil_temp:
