@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Projects - QFIL Downloader{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5">
+                <i class="fas fa-cogs me-3"></i>
+                Manage Projects
+            </h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+                <i class="fas fa-plus me-2"></i>
+                Add New Project
+            </button>
+        </div>
+
+        <!-- Project List -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Configured Projects ({{ projects|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if projects %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Path</th>
+                                <th>Description</th>
+                                <th>Added Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectsTable">
+                            {% for project in projects %}
+                            <tr data-project-name="{{ project.name }}">
+                                <td>
+                                    <strong>{{ project.name }}</strong>
+                                </td>
+                                <td>
+                                    <code class="text-muted">{{ project.path }}</code>
+                                </td>
+                                <td>
+                                    {{ project.description or 'No description' }}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ project.added_date[:10] if project.added_date else 'Unknown' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/project/{{ project.name }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-outline-danger" onclick="removeProject('{{ project.name }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-folder-open text-muted" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 text-muted">No Projects Configured</h4>
+                    <p class="text-muted">Add your first AOSP project to get started.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Instructions
+                </h5>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li><strong>Locate your AOSP project:</strong> Find the root directory of your AOSP project</li>
+                    <li><strong>Verify QFIL structure:</strong> Ensure the project has the path <code>Unpacking_Tool/qfil_dowload_emmc/</code></li>
+                    <li><strong>Add project:</strong> Click "Add New Project" and provide the full path to your project directory</li>
+                    <li><strong>Download:</strong> Once added, the project will appear on the main page for download</li>
+                </ol>
+                
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Required Structure:</strong> Each project must have the exact structure:
+                    <code>/path/to/your/project/Unpacking_Tool/qfil_dowload_emmc/</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Project Modal -->
+<div class="modal fade" id="addProjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    Add New Project
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProjectForm">
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Project Name *</label>
+                        <input type="text" class="form-control" id="projectName" required
+                               placeholder="e.g., my_android_project">
+                        <small class="form-text text-muted">
+                            Use alphanumeric characters, underscores, hyphens, and dots only
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectPath" class="form-label">Project Path *</label>
+                        <input type="text" class="form-control" id="projectPath" required
+                               placeholder="e.g., C:\Users\username\my_project">
+                        <small class="form-text text-muted">
+                            Full path to the project root directory
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="projectDescription" rows="2"
+                                  placeholder="Brief description of this project"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="addProject()">
+                    <i class="fas fa-plus me-1"></i>
+                    Add Project
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function addProject() {
+    const name = document.getElementById('projectName').value.trim();
+    const path = document.getElementById('projectPath').value.trim();
+    const description = document.getElementById('projectDescription').value.trim();
+    
+    if (!name || !path) {
+        alert('Project name and path are required');
+        return;
+    }
+    
+    // Validate project name
+    if (!/^[a-zA-Z0-9_.-]+$/.test(name)) {
+        alert('Project name can only contain alphanumeric characters, underscores, hyphens, and dots');
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding...';
+    button.disabled = true;
+    
+    try {
+        const response = await fetch('/add_project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                path: path,
+                description: description
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            // Close modal and reload page
+            bootstrap.Modal.getInstance(document.getElementById('addProjectModal')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to add project'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+}
+
+async function removeProject(projectName) {
+    if (!confirm(`Are you sure you want to remove project "${projectName}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/remove_project/${encodeURIComponent(projectName)}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            // Remove row from table
+            const row = document.querySelector(`tr[data-project-name="${projectName}"]`);
+            if (row) {
+                row.remove();
+            }
+            
+            // Reload page if no projects left
+            if (document.querySelectorAll('#projectsTable tr').length === 0) {
+                location.reload();
+            }
+        } else {
+            alert('Error: ' + (result.error || 'Failed to remove project'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+// Reset form when modal is hidden
+document.getElementById('addProjectModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('addProjectForm').reset();
+});
+</script>
+{% endblock %}

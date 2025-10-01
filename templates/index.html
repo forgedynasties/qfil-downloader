@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}QFIL Downloader - AOSP Projects{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-4">
+                <i class="fas fa-mobile-alt me-3"></i>
+                AOSP Projects
+            </h1>
+            <div class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                {{ projects|length }} project{{ 's' if projects|length != 1 else '' }} available
+            </div>
+        </div>
+
+        {% if projects %}
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Welcome!</strong> Select a project below to download its QFIL package. 
+                The package will be automatically zipped and downloaded to your device.
+            </div>
+
+            <div class="row">
+                {% for project in projects %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card project-card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-folder me-2"></i>
+                                {{ project.name }}
+                            </h5>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="badge bg-secondary stats-badge">
+                                        <i class="fas fa-file me-1"></i>
+                                        {{ project.file_count }} files
+                                    </span>
+                                    <span class="badge bg-info stats-badge">
+                                        <i class="fas fa-weight-hanging me-1"></i>
+                                        {{ format_size(project.size) }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-folder-open me-1"></i>
+                                    {{ project.path }}
+                                </small>
+                                {% if project.description %}
+                                <small class="text-muted fst-italic d-block mt-1">{{ project.description }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mt-auto">
+                                <div class="d-grid gap-2">
+                                    <a href="/download/{{ project.name }}" 
+                                       class="btn btn-success download-btn">
+                                        <i class="fas fa-download me-2"></i>
+                                        Download QFIL Package
+                                    </a>
+                                    <a href="/project/{{ project.name }}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-folder-open" style="font-size: 4rem; color: #6c757d;"></i>
+                </div>
+                <h3 class="text-muted">No Projects Found</h3>
+                <p class="text-muted mb-4">
+                    No AOSP projects with QFIL packages are currently available.
+                </p>
+                <div class="alert alert-warning" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Setup Required
+                    </h5>
+                    <p class="mb-0">
+                        To get started, <a href="/manage" class="alert-link">manage your projects</a> to add AOSP project paths. 
+                        Each project should have the structure: <code>/path/to/project/Unpacking_Tool/qfil_dowload_emmc/</code> 
+                        containing the QFIL files.
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let activeDownloads = new Map();
+
+async function startDownloadWithProgress(projectName, buttonElement) {
+    const originalText = buttonElement.innerHTML;
+    
+    try {
+        // Get download ID first
+        const response = await fetch(`/download/${projectName}?progress=true`);
+        const data = await response.json();
+        const downloadId = data.download_id;
+        
+        // Update button to show progress
+        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Preparing...';
+        buttonElement.disabled = true;
+        
+        // Start the actual download in background
+        const downloadUrl = `/download/${projectName}`;
+        const downloadWindow = window.open(downloadUrl, '_blank');
+        
+        // Track progress
+        activeDownloads.set(projectName, downloadId);
+        trackDownloadProgress(projectName, downloadId, buttonElement, originalText);
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        buttonElement.innerHTML = originalText;
+        buttonElement.disabled = false;
+        alert('Error starting download: ' + error.message);
+    }
+}
+
+async function trackDownloadProgress(projectName, downloadId, buttonElement, originalText) {
+    try {
+        const response = await fetch(`/progress/${downloadId}`);
+        const progress = await response.json();
+        
+        if (progress.status === 'not_found') {
+            // Download might not have started yet
+            setTimeout(() => trackDownloadProgress(projectName, downloadId, buttonElement, originalText), 1000);
+            return;
+        }
+        
+        if (progress.status === 'starting' || progress.status === 'zipping') {
+            const progressPercent = progress.progress || 0;
+            const currentFile = progress.current_filename || 'files';
+            buttonElement.innerHTML = `
+                <i class="fas fa-archive me-2"></i>
+                Zipping ${currentFile}... ${progressPercent}%
+            `;
+            
+            // Continue tracking
+            setTimeout(() => trackDownloadProgress(projectName, downloadId, buttonElement, originalText), 500);
+        } else if (progress.status === 'complete') {
+            buttonElement.innerHTML = '<i class="fas fa-check me-2"></i>Download Ready!';
+            setTimeout(() => {
+                buttonElement.innerHTML = originalText;
+                buttonElement.disabled = false;
+                activeDownloads.delete(projectName);
+            }, 2000);
+        } else if (progress.status === 'error') {
+            buttonElement.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Error';
+            setTimeout(() => {
+                buttonElement.innerHTML = originalText;
+                buttonElement.disabled = false;
+                activeDownloads.delete(projectName);
+            }, 3000);
+            alert('Download error: ' + (progress.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Progress tracking error:', error);
+        setTimeout(() => {
+            buttonElement.innerHTML = originalText;
+            buttonElement.disabled = false;
+            activeDownloads.delete(projectName);
+        }, 2000);
+    }
+}
+
+// Add progress tracking to download buttons
+document.addEventListener('DOMContentLoaded', function() {
+    const downloadButtons = document.querySelectorAll('.download-btn');
+    
+    downloadButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Extract project name from href
+            const href = this.getAttribute('href');
+            const projectName = href.split('/download/')[1];
+            
+            if (activeDownloads.has(projectName)) {
+                alert('Download already in progress for this project');
+                return;
+            }
+            
+            startDownloadWithProgress(projectName, this);
+        });
+    });
+});
+</script>
+{% endblock %}

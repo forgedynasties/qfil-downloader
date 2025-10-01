@@ -1,0 +1,17 @@
+# Sample QFIL Package File
+# This is a placeholder file for demonstration purposes
+# Replace with actual QFIL files (.bin, .mbn, .elf, etc.)
+
+This directory should contain your actual QFIL files such as:
+- boot.img
+- system.img  
+- userdata.img
+- recovery.img
+- And other partition images
+
+File types typically include:
+- .bin files
+- .mbn files
+- .elf files
+- .img files
+- partition files
