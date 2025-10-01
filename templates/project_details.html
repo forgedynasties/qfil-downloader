@@ -32,7 +32,7 @@
                     <code>{{ project.path }}</code>
                 </p>
             </div>
-            <a href="/download/{{ project.name }}" class="btn btn-success btn-lg download-btn">
+            <a href="{{ url_for('download_qfil', project_name=project.name) }}" class="btn btn-success btn-lg download-btn">
                 <i class="fas fa-download me-2"></i>
                 Download Package
             </a>
@@ -173,16 +173,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const downloadButton = document.querySelector('.download-btn');
     
     if (downloadButton) {
-        downloadButton.addEventListener('click', function() {
+        downloadButton.addEventListener('click', function(e) {
             const originalText = this.innerHTML;
             this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Preparing Download...';
             this.disabled = true;
             
-            // Re-enable button after 10 seconds
-            setTimeout(() => {
+            // Set longer timeout and handle download completion
+            const timeout = setTimeout(() => {
                 this.innerHTML = originalText;
                 this.disabled = false;
-            }, 10000);
+            }, 30000); // Increased to 30 seconds
+            
+            // Listen for page unload to re-enable button (in case user navigates away)
+            window.addEventListener('beforeunload', () => {
+                clearTimeout(timeout);
+                this.innerHTML = originalText;
+                this.disabled = false;
+            });
+            
+            // If it's a direct download link, allow it to proceed
+            // The browser will handle the file download
         });
     }
 });

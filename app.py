@@ -313,8 +313,8 @@ def download_qfil(project_name):
     if not project_name or len(project_name) > 100:
         abort(400, 'Invalid project name length')
     
-    # Check for path traversal and other dangerous patterns
-    if '..' in project_name or '/' in project_name or '\\' in project_name:
+    # Check for path traversal patterns (but allow URL-encoded characters)
+    if '..' in project_name:
         abort(400, 'Invalid project name format')
     
     # Find project in manual list
@@ -392,8 +392,8 @@ def project_details(project_name):
     if not project_name or len(project_name) > 100:
         abort(400, 'Invalid project name length')
     
-    # Check for dangerous patterns
-    if '..' in project_name or '/' in project_name or '\\' in project_name:
+    # Check for path traversal patterns (but allow URL-encoded characters)
+    if '..' in project_name:
         abort(400, 'Invalid project name format')
     
     # Find project in manual list
